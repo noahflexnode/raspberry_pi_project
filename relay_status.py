@@ -2,7 +2,7 @@
 
 import sys
 import os
-
+#to do change stateless
 STATE_FILE = '/home/pi/scripts/relay_state.txt'  # File to store the relay state
 
 def read_relay_state():
