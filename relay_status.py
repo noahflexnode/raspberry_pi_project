@@ -1,40 +1,25 @@
-#!/usr/bin/env python3
+import RPi.GPIO as GPIO
 
-import sys
-import os
-#to do change stateless
-STATE_FILE = '/home/pi/scripts/relay_state.txt'  # File to store the relay state
-
-def read_relay_state():
-    if os.path.exists(STATE_FILE):
-        with open(STATE_FILE, 'r') as f:
-            state = f.read().strip()
-            if state == 'ON':
-                return 1
-            elif state == 'OFF':
-                return 0
-    return -1  # Return -1 if the state could not be determined
-
-def get_relay_status():
+def check_relay_status(relay_pin):
     try:
-        # Read the current state from the file
-        return read_relay_state()
-    
+        # Read the state of the relay
+        relay_status = GPIO.input(relay_pin)
+       
+        # Determine and return the status based on the GPIO state
+        if relay_status == GPIO.HIGH:
+            return "Relay is ON"  # Adjust based on your relay logic (active high or low)
+        else:
+            return "Relay is OFF"
     except Exception as e:
-        
-        print(f"An error occurred: {str(e)}")
-        
-        # Return -1 to indicate an error in determining the state
-        return -1
+        # Handle any potential errors during the status check
+        return f"Error checking relay status: {str(e)}"
 
 if __name__ == "__main__":
-    status = get_relay_status()
-    if status == 1:
-        print("ON")
-        sys.exit(0)
-    elif status == 0:
-        print("OFF")
-        sys.exit(0)
-    else:
-        print("ERROR")
-        sys.exit(1)
+    relayPin = 5  # Ensure this matches the relay pin used in button_detector.py
+
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(relayPin, GPIO.IN)  # Set relay pin as input to read its status
+
+    print(check_relay_status(relayPin))
+
+    GPIO.cleanup()
