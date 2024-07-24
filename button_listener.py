@@ -1,45 +1,27 @@
-from gpiozero import Device, Button
-from gpiozero.pins.mock import MockFactory
-import keyboard
-import subprocess
 from time import sleep
+import RPi.GPIO as GPIO
+from toggle_relay import toggle_relay
 
-# Set gpiozero pin factory to mock (for testing)
-Device.pin_factory = MockFactory()
+delay = 0.2
+inPin = 3
 
-# Configuration: Set to True to use spacebar, False to use hardware button
-USE_SPACEBAR = True
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(inPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# GPIO pin connected to button (used only if USE_SPACEBAR is False)
-button_pin = 18
+buttonState = 1
+buttonStateOld = 1
+printState = False
 
-def toggle_relay():
-    try:
-        # Call the toggle_relay.py script
-        result = subprocess.run(['python3', 'toggle_relay.py'], capture_output=True, text=True)
-        # Print the output from toggle_relay.py
-        print(result.stdout.strip())
-    except Exception as e:
-        print(f"An error occurred while toggling the relay: {str(e)}")
+try:
+	while True:
+		buttonState = GPIO.input(inPin)
+		if buttonState == 1 and buttonStateOld == 0:
+			printState = toggle_relay(printState)
+			buttonStateOld = buttonState
+			sleep(delay)
+		else:
+			buttonStateOld = buttonState
 
-# Function to check for spacebar press
-def listen_for_spacebar():
-    print("Listening for spacebar presses (press 'esc' to exit)...")
-    while True:
-        try:
-            if keyboard.is_pressed('space'):
-                toggle_relay()
-                sleep(0.3)  # Debounce delay
-            if keyboard.is_pressed('esc'):
-                print("\nProgram stopped by user")
-                break
-            sleep(0.1)
-        except KeyboardInterrupt:
-            print("\nProgram stopped by user")
-            break
-
-if USE_SPACEBAR:
-    listen_for_spacebar()
-else:
-    # Code for hardware button (not shown for brevity)
-    pass                
+except KeyboardInterrupt:
+	GPIO.cleanup()
+	print("GPIO cleaned")
